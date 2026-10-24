@@ -54,4 +54,27 @@ Workshop Oct/
 > eso es solo una corrida corta de prueba. El modelo final se entrena con los valores por defecto
 > (ver Paso 8).
 
-RESULTADOS_PLACEHOLDER
+## Resultado final (resumen)
+Evaluado en 6 regímenes × 20 semillas de test nunca vistas. **Score robusto** = PnL medio − ½·drawdown
+medio, promediado entre regímenes.
+
+| Política | Score robusto | Drawdown medio | Comentario |
+|---|---:|---:|---|
+| **Modelo final** (Double Dueling DQN, n-step, recompensa con riesgo, regímenes aleatorios) | **1,360** | **$440** | Positivo en los 6 regímenes |
+| Regla momentum | 707 | $1,299 | Gana en tendencias, sufre en volatilidad |
+| Regla market maker | 547 | $140 | Poca ganancia, muy consistente |
+| Hold (no operar) | 0 | $0 | Piso |
+| DQN inicial del paquete | −256 | $1,578 | Aprendió "comprar siempre" |
+
+Lo más importante que aprendimos (detalle en `Solucion/08_...`):
+1. Entrenar con **regímenes diversos** es lo que más aporta: sin ellos el agente pierde en el 100 % de
+   los mercados bajistas.
+2. La **recompensa con penalización de riesgo** baja el PnL máximo, pero reduce el drawdown a un tercio.
+3. **Una sola semilla engaña**, tanto al evaluar como al entrenar: Double DQN y Dueling no mostraron
+   un efecto medible frente a la variación entre semillas.
+
+## Antes de entregar
+- Correr `SETUP_ONCE.bat` y la **opción 6** (prueba de ABIDES-NG) en el equipo Windows: no se pudo
+  ejecutar en el entorno donde se preparó la solución.
+- Re-exportar con el **ID y los integrantes reales** (opción 9) y validar (opción V).
+  `submission/TEAM_XX.zip` es solo un ejemplo.

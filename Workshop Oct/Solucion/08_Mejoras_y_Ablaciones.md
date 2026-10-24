@@ -107,7 +107,39 @@ volatile: NAV=$100,337.03, PnL=$337.03, trades=146
 - Ojo con el sesgo de selección: en validación el score era 1,567 y en test 1,360. Escoger el mejor
   checkpoint mirando la validación la vuelve un poco optimista; por eso el reporte final usa test.
 
-ABLATION_PLACEHOLDER
+## Ablaciones: ¿qué mejora aporta de verdad?
+Reentrenamos el modelo final **apagando una mejora a la vez** (mismos 150k pasos, misma semilla 7,
+κ = 0.05) y evaluamos en las mismas semillas de test. También repetimos la configuración final con
+**otra semilla de entrenamiento (11)** para medir cuánto varía el resultado solo por azar.
+Tablas completas en `Student_Package/outputs/eval_abl_*.md`.
+
+| Variante | Comando (`--...`) | score test | drawdown medio $ | % semillas ganadoras | Lo más llamativo |
+|---|---|---:|---:|---:|---|
+| **Final** (semilla 7) | — | 1,360 | **440** | **84 %** | positivo en los 6 regímenes |
+| Final, otra semilla (11) | `--seed 11` | 1,068 | 731 | 78 % | **variación por azar ≈ ±150** |
+| Sin regímenes aleatorios | `--regimes practice` | **560** | 733 | 62 % | `downtrend` −1,371 (0 % ganadoras) |
+| Retornos de 1 paso | `--n-step 1` | 762 | 708 | 74 % | `trending` cae a 321, `stress` negativo |
+| Recompensa original | `--reward basic` | 2,032 | **1,465** | 72 % | `stress` drawdown 3,982; `volatile` 45 % ganadoras |
+| DQN normal (sin Double) | `--algo dqn` | 1,531 | 611 | 81 % | dentro del ruido |
+| MLP (sin dueling) | `--arch mlp` | 1,448 | 650 | 83 % | dentro del ruido |
+
+### Conclusiones honestas
+1. **Regímenes aleatorios: es la mejora más importante** (560 → 1,360). Sin ellos el agente nunca ve
+   una tendencia bajista y pierde dinero en el 100 % de las semillas de `downtrend`. Es el mismo
+   fallo del DQN inicial: lo que no está en el entrenamiento no se generaliza.
+2. **Retornos de 3 pasos: aportan claramente** (762 → 1,360). Con 1 paso, el agente no logra conectar
+   "tomar posición ahora" con la ganancia que llega varios pasos después.
+3. **Recompensa con riesgo: es un compromiso, no una mejora gratis.** La recompensa original tiene
+   **mayor** PnL medio (score 2,032), pero lo logra con posiciones casi al límite (inventario final
+   ~400–480) y **más del triple de drawdown** (1,465 vs 440). En `volatile` gana solo en el 45 % de las
+   semillas. La mantenemos porque el objetivo del taller es una política robusta en escenarios ocultos,
+   no la de mayor ganancia en nuestro simulador (ver pregunta 4 del Paso 10).
+4. **Double DQN y Dueling: sin efecto medible aquí.** Quitarlos da 1,531 y 1,448, que están dentro de
+   la variación entre semillas de entrenamiento (1,068 vs 1,360 con la *misma* configuración). No
+   podemos afirmar que ayuden en este problema. Las dejamos porque no empeoran, son estándar y
+   protegen contra la sobreestimación, pero **no las presentaríamos como la razón de la mejora**.
+5. **Lección de método:** sin la corrida con otra semilla habríamos concluido que "Double y Dueling
+   empeoran el modelo", y sería falso. Una sola corrida de entrenamiento también es "una sola semilla".
 
 ## Limitaciones y riesgos conocidos
 - El mercado de práctica no tiene **impacto de mercado** ni competencia por la cola de órdenes límite;
